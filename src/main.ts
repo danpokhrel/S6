@@ -4,9 +4,18 @@ const app = document.querySelector<HTMLElement>("#app")!;
 
 type GameState = {
   stardust: number;
+  moths: number;
 };
 
-const state: GameState = { stardust: 0 };
+const state: GameState = { stardust: 0, moths: 0 };
+
+const CLICK_BASE = 1;
+const MOTH_COST = 15;
+const MOTH_CLICK_MULTIPLIER = 2;
+
+function clickPower(): number {
+  return CLICK_BASE * Math.pow(MOTH_CLICK_MULTIPLIER, state.moths);
+}
 
 const heading = document.createElement("h1");
 heading.textContent = "Star Gardener";
@@ -23,9 +32,25 @@ plantStar.type = "button";
 plantStar.id = "plant-star";
 plantStar.textContent = "Plant a star";
 plantStar.addEventListener("click", () => {
-  state.stardust += 1;
+  state.stardust += clickPower();
   render();
 });
+
+const mothButton = document.createElement("button");
+mothButton.type = "button";
+mothButton.id = "moth-upgrade";
+mothButton.addEventListener("click", () => {
+  if (state.stardust < MOTH_COST) return;
+  state.stardust -= MOTH_COST;
+  state.moths += 1;
+  render();
+});
+
+function render() {
+  stardustCounter.textContent = `${Math.floor(state.stardust)} stardust`;
+  mothButton.textContent = `Call a lantern moth (${MOTH_COST} stardust)`;
+  mothButton.disabled = state.stardust < MOTH_COST;
+}
 
 // The Great Seed sheds light on its own: 1 stardust per second. Growth is
 // integrated from elapsed real time, so it does not depend on frame rate.
@@ -43,9 +68,5 @@ function tick(now: number) {
 
 requestAnimationFrame(tick);
 
-function render() {
-  stardustCounter.textContent = `${Math.floor(state.stardust)} stardust`;
-}
-
-app.append(heading, tagline, stardustCounter, plantStar);
+app.append(heading, tagline, stardustCounter, plantStar, mothButton);
 render();

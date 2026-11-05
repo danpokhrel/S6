@@ -57,3 +57,21 @@ h1 {
 #plant-star:active {
   transform: scale(0.94);
 }
+
+#moth-upgrade {
+  display: block;
+  margin: 1rem auto 0;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid #cbe3d6;
+  background: transparent;
+  color: #cbe3d6;
+  cursor: pointer;
+}
+
+#moth-upgrade:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
