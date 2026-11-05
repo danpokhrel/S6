@@ -27,9 +27,15 @@ h1 {
 }
 
 .tagline {
-  margin: 0 0 2rem;
+  margin: 0 0 0.75rem;
   font-style: italic;
   color: #cbe3d6;
+}
+
+#stardust-counter {
+  margin: 0 0 2rem;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
 }
 
 #plant-star {
