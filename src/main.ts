@@ -27,6 +27,15 @@ plantStar.addEventListener("click", () => {
   render();
 });
 
+// The Great Seed sheds light on its own: 1 stardust per second.
+const PASSIVE_STARDUST_PER_TICK = 1;
+const TICK_MS = 1000;
+
+setInterval(() => {
+  state.stardust += PASSIVE_STARDUST_PER_TICK;
+  render();
+}, TICK_MS);
+
 function render() {
   stardustCounter.textContent = `${state.stardust} stardust`;
 }
