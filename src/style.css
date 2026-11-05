@@ -58,20 +58,35 @@ h1 {
   transform: scale(0.94);
 }
 
-#moth-upgrade {
-  display: block;
-  margin: 1rem auto 0;
+#rate-line {
+  margin: 0 0 1.5rem;
+  font-style: italic;
+  color: #cbe3d6;
+}
+
+#shop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+#shop button {
   font: inherit;
   font-size: 0.95rem;
   padding: 0.6rem 1.4rem;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid #cbe3d6;
-  background: transparent;
+  background: rgba(23, 107, 104, 0.55);
   color: #cbe3d6;
   cursor: pointer;
 }
 
-#moth-upgrade:disabled {
+#shop button:hover:enabled {
+  background: rgba(29, 129, 125, 0.8);
+}
+
+#shop button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

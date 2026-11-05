@@ -2,19 +2,78 @@ import "./style.css";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
-type GameState = {
-  stardust: number;
-  moths: number;
+type Upgrade = {
+  id: string;
+  name: string;
+  description: string;
+  baseCost: number;
+  // Extra stardust per second granted by each copy of this upgrade.
+  stardustPerSecond: number;
+  // Extra stardust per click granted by each copy of this upgrade.
+  stardustPerClick: number;
+  owned: number;
 };
 
-const state: GameState = { stardust: 0, moths: 0 };
+// The garden's residents. Passive helpers (dew, comets) grow stardust over
+// time; the moth carries light to the seed on each click.
+const upgrades: Upgrade[] = [
+  {
+    id: "moth",
+    name: "Lantern moth",
+    description: "Carries light from the flowers to the seed.",
+    baseCost: 15,
+    stardustPerSecond: 0,
+    stardustPerClick: 1,
+    owned: 0,
+  },
+  {
+    id: "dewcatcher",
+    name: "Dewcatcher",
+    description: "Traps the dew that condenses from moonlight.",
+    baseCost: 20,
+    stardustPerSecond: 0.5,
+    stardustPerClick: 0,
+    owned: 0,
+  },
+  {
+    id: "comet",
+    name: "Comet plow",
+    description: "Tills the dark soil of the sky.",
+    baseCost: 150,
+    stardustPerSecond: 3,
+    stardustPerClick: 0,
+    owned: 0,
+  },
+];
+
+type GameState = {
+  stardust: number;
+};
+
+const state: GameState = { stardust: 0 };
 
 const CLICK_BASE = 1;
-const MOTH_COST = 15;
-const MOTH_CLICK_MULTIPLIER = 2;
+// The Great Seed sheds its own light even before anything is planted.
+const SEED_BASE_PER_SECOND = 1;
 
 function clickPower(): number {
-  return CLICK_BASE * Math.pow(MOTH_CLICK_MULTIPLIER, state.moths);
+  return (
+    CLICK_BASE +
+    upgrades.reduce(
+      (total, upgrade) => total + upgrade.stardustPerClick * upgrade.owned,
+      0,
+    )
+  );
+}
+
+function stardustPerSecond(): number {
+  return (
+    SEED_BASE_PER_SECOND +
+    upgrades.reduce(
+      (total, upgrade) => total + upgrade.stardustPerSecond * upgrade.owned,
+      0,
+    )
+  );
 }
 
 const heading = document.createElement("h1");
@@ -27,6 +86,9 @@ tagline.textContent = "The night sky is a garden gone to seed.";
 const stardustCounter = document.createElement("p");
 stardustCounter.id = "stardust-counter";
 
+const rateLine = document.createElement("p");
+rateLine.id = "rate-line";
+
 const plantStar = document.createElement("button");
 plantStar.type = "button";
 plantStar.id = "plant-star";
@@ -36,37 +98,52 @@ plantStar.addEventListener("click", () => {
   render();
 });
 
-const mothButton = document.createElement("button");
-mothButton.type = "button";
-mothButton.id = "moth-upgrade";
-mothButton.addEventListener("click", () => {
-  if (state.stardust < MOTH_COST) return;
-  state.stardust -= MOTH_COST;
-  state.moths += 1;
-  render();
-});
+const shop = document.createElement("div");
+shop.id = "shop";
+
+const shopButtons = new Map<string, HTMLButtonElement>();
+for (const upgrade of upgrades) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.dataset.upgradeId = upgrade.id;
+  button.addEventListener("click", () => {
+    if (state.stardust < upgrade.baseCost) return;
+    state.stardust -= upgrade.baseCost;
+    upgrade.owned += 1;
+    render();
+  });
+  shop.append(button);
+  shopButtons.set(upgrade.id, button);
+}
 
 function render() {
   stardustCounter.textContent = `${Math.floor(state.stardust)} stardust`;
-  mothButton.textContent = `Call a lantern moth (${MOTH_COST} stardust)`;
-  mothButton.disabled = state.stardust < MOTH_COST;
+  const rate = stardustPerSecond();
+  rateLine.textContent = rate > SEED_BASE_PER_SECOND
+    ? `${rate} stardust per second`
+    : "The seed sheds its own light: 1 stardust per second";
+  for (const upgrade of upgrades) {
+    const button = shopButtons.get(upgrade.id)!;
+    button.textContent =
+      `${upgrade.name} (${upgrade.baseCost}) — owned ${upgrade.owned}`;
+    button.disabled = state.stardust < upgrade.baseCost;
+    button.title = upgrade.description;
+  }
 }
 
-// The Great Seed sheds light on its own: 1 stardust per second. Growth is
-// integrated from elapsed real time, so it does not depend on frame rate.
-const PASSIVE_STARDUST_PER_SECOND = 1;
-
+// Growth is integrated from elapsed real time, so it does not depend on
+// frame rate.
 let lastTick = performance.now();
 
 function tick(now: number) {
   const elapsedSeconds = (now - lastTick) / 1000;
   lastTick = now;
-  state.stardust += elapsedSeconds * PASSIVE_STARDUST_PER_SECOND;
+  state.stardust += elapsedSeconds * stardustPerSecond();
   render();
   requestAnimationFrame(tick);
 }
 
 requestAnimationFrame(tick);
 
-app.append(heading, tagline, stardustCounter, plantStar, mothButton);
+app.append(heading, tagline, stardustCounter, rateLine, plantStar, shop);
 render();
