@@ -56,6 +56,14 @@ const CLICK_BASE = 1;
 // The Great Seed sheds its own light even before anything is planted.
 const SEED_BASE_PER_SECOND = 1;
 
+// Each copy of an upgrade makes the next one more expensive, so the
+// garden's growth must be planned rather than spammed.
+const COST_GROWTH = 1.35;
+
+function upgradeCost(upgrade: Upgrade): number {
+  return Math.ceil(upgrade.baseCost * Math.pow(COST_GROWTH, upgrade.owned));
+}
+
 function clickPower(): number {
   return (
     CLICK_BASE +
@@ -107,8 +115,9 @@ for (const upgrade of upgrades) {
   button.type = "button";
   button.dataset.upgradeId = upgrade.id;
   button.addEventListener("click", () => {
-    if (state.stardust < upgrade.baseCost) return;
-    state.stardust -= upgrade.baseCost;
+    const cost = upgradeCost(upgrade);
+    if (state.stardust < cost) return;
+    state.stardust -= cost;
     upgrade.owned += 1;
     render();
   });
@@ -124,9 +133,10 @@ function render() {
     : "The seed sheds its own light: 1 stardust per second";
   for (const upgrade of upgrades) {
     const button = shopButtons.get(upgrade.id)!;
-    button.textContent =
-      `${upgrade.name} (${upgrade.baseCost}) — owned ${upgrade.owned}`;
-    button.disabled = state.stardust < upgrade.baseCost;
+    button.textContent = `${upgrade.name} (${
+      upgradeCost(upgrade)
+    }) — owned ${upgrade.owned}`;
+    button.disabled = state.stardust < upgradeCost(upgrade);
     button.title = upgrade.description;
   }
 }
