@@ -1,6 +1,6 @@
 # D1 starter
 
-A minimal TypeScript/Vite browser project with Deno checks and GitHub Pages deployment.
+**Star Gardener** — a Cookie Clicker-style incremental game built with TypeScript and Vite. The night sky is a garden gone to seed: click the Great Seed to plant light and gather stardust, then spend it on celestial-garden residents (lantern moths, dewcatchers, comet plows) that keep growing stardust for you. Each purchase makes the next one pricier.
 
 ## Credits
 

@@ -1,4 +1,8 @@
 import "./style.css";
+// Vite turns this import into a production-safe URL. Keep it as a file so
+// the Great Seed is a separately deployed asset.
+// @deno-types="./asset-url.d.ts"
+import greatStarUrl from "./assets/great-star.svg?no-inline";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -84,12 +88,25 @@ function stardustPerSecond(): number {
   );
 }
 
+function formatStardust(value: number): string {
+  if (value < 1000) return Math.floor(value).toString();
+  const units = ["K", "M", "B", "T"];
+  let scaled = value;
+  let unitIndex = -1;
+  while (scaled >= 1000 && unitIndex < units.length - 1) {
+    scaled /= 1000;
+    unitIndex += 1;
+  }
+  const digits = scaled < 10 ? 2 : 1;
+  return `${scaled.toFixed(digits)}${units[unitIndex]}`;
+}
+
 const heading = document.createElement("h1");
 heading.textContent = "Star Gardener";
 
 const tagline = document.createElement("p");
 tagline.className = "tagline";
-tagline.textContent = "The night sky is a garden gone to seed.";
+tagline.textContent = "The night sky is a garden gone to seed. Tend it.";
 
 const stardustCounter = document.createElement("p");
 stardustCounter.id = "stardust-counter";
@@ -97,48 +114,95 @@ stardustCounter.id = "stardust-counter";
 const rateLine = document.createElement("p");
 rateLine.id = "rate-line";
 
-const plantStar = document.createElement("button");
-plantStar.type = "button";
-plantStar.id = "plant-star";
-plantStar.textContent = "Plant a star";
-plantStar.addEventListener("click", () => {
-  state.stardust += clickPower();
+const greatSeed = document.createElement("button");
+greatSeed.type = "button";
+greatSeed.id = "great-seed";
+greatSeed.setAttribute("aria-label", "Plant a star");
+greatSeed.addEventListener("click", (event) => {
+  const harvest = clickPower();
+  state.stardust += harvest;
+  floatHarvest(event, harvest);
   render();
 });
+
+const seedImage = document.createElement("img");
+seedImage.src = greatStarUrl;
+seedImage.alt = "The Great Seed, a dim star waiting to be woken";
+seedImage.draggable = false;
 
 const shop = document.createElement("div");
 shop.id = "shop";
 
-const shopButtons = new Map<string, HTMLButtonElement>();
+const shopCards = new Map<string, HTMLButtonElement>();
 for (const upgrade of upgrades) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.dataset.upgradeId = upgrade.id;
-  button.addEventListener("click", () => {
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "shop-card";
+  card.dataset.upgradeId = upgrade.id;
+  card.addEventListener("click", () => {
     const cost = upgradeCost(upgrade);
     if (state.stardust < cost) return;
     state.stardust -= cost;
     upgrade.owned += 1;
     render();
   });
-  shop.append(button);
-  shopButtons.set(upgrade.id, button);
+  shop.append(card);
+  shopCards.set(upgrade.id, card);
+}
+
+function floatHarvest(event: MouseEvent, harvest: number) {
+  const seedRect = greatSeed.getBoundingClientRect();
+  const mote = document.createElement("span");
+  mote.className = "harvest-mote";
+  mote.textContent = `+${formatStardust(harvest)}`;
+  mote.style.left = `${event.clientX - seedRect.left}px`;
+  mote.style.top = `${event.clientY - seedRect.top}px`;
+  mote.addEventListener("animationend", () => mote.remove());
+  greatSeed.append(mote);
 }
 
 function render() {
-  stardustCounter.textContent = `${Math.floor(state.stardust)} stardust`;
+  stardustCounter.textContent = `✦ ${formatStardust(state.stardust)} stardust`;
   const rate = stardustPerSecond();
   rateLine.textContent = rate > SEED_BASE_PER_SECOND
     ? `${rate} stardust per second`
     : "The seed sheds its own light: 1 stardust per second";
   for (const upgrade of upgrades) {
-    const button = shopButtons.get(upgrade.id)!;
-    button.textContent = `${upgrade.name} (${
-      upgradeCost(upgrade)
-    }) — owned ${upgrade.owned}`;
-    button.disabled = state.stardust < upgradeCost(upgrade);
-    button.title = upgrade.description;
+    const card = shopCards.get(upgrade.id)!;
+    const cost = upgradeCost(upgrade);
+    const affordable = state.stardust >= cost;
+    const effect = upgrade.stardustPerClick > 0
+      ? `+${upgrade.stardustPerClick} per click`
+      : `+${upgrade.stardustPerSecond} per second`;
+    card.innerHTML = "";
+    const name = document.createElement("span");
+    name.className = "shop-name";
+    name.textContent = upgrade.name;
+    const meta = document.createElement("span");
+    meta.className = "shop-meta";
+    meta.textContent = `costs ${formatStardust(cost)} — owned ${upgrade.owned}`;
+    const detail = document.createElement("span");
+    detail.className = "shop-detail";
+    detail.textContent = `${upgrade.description} ${effect}.`;
+    card.append(name, meta, detail);
+    card.disabled = !affordable;
   }
+}
+
+// A field of background stars, each twinkling on its own rhythm.
+const sky = document.createElement("div");
+sky.id = "sky";
+for (let i = 0; i < 70; i += 1) {
+  const star = document.createElement("span");
+  star.className = "sky-star";
+  star.style.left = `${Math.random() * 100}%`;
+  star.style.top = `${Math.random() * 100}%`;
+  const size = 1 + Math.random() * 2;
+  star.style.width = `${size}px`;
+  star.style.height = `${size}px`;
+  star.style.animationDuration = `${2 + Math.random() * 4}s`;
+  star.style.animationDelay = `${Math.random() * 4}s`;
+  sky.append(star);
 }
 
 // Growth is integrated from elapsed real time, so it does not depend on
@@ -155,5 +219,14 @@ function tick(now: number) {
 
 requestAnimationFrame(tick);
 
-app.append(heading, tagline, stardustCounter, rateLine, plantStar, shop);
+greatSeed.append(seedImage);
+app.append(
+  sky,
+  heading,
+  tagline,
+  stardustCounter,
+  rateLine,
+  greatSeed,
+  shop,
+);
 render();
