@@ -64,9 +64,20 @@ export function buildUi(
   greatSeed.type = "button";
   greatSeed.id = "great-seed";
   greatSeed.setAttribute("aria-label", "Plant a star");
+
+  // A soft halo that puffs out behind the seed on every press.
+  const seedFlare = document.createElement("span");
+  seedFlare.className = "seed-flare";
+  greatSeed.append(seedFlare);
+
   greatSeed.addEventListener("click", (event) => {
     const harvest = callbacks.onPlant(event);
     floatHarvest(greatSeed, event, harvest);
+    shockwave(greatSeed, event);
+    sparkBurst(greatSeed, event);
+    seedFlarePuff(seedFlare);
+    flashSeed(greatSeed);
+    punch(stardustCounter);
   });
 
   const seedImage = document.createElement("img");
@@ -130,6 +141,14 @@ export function buildUi(
   };
 }
 
+// Removes the element once its one-shot animation has certainly finished.
+// CSS animations pause in hidden tabs, so animationend alone is not a
+// reliable cleanup signal.
+function transient(element: HTMLElement, milliseconds: number): void {
+  element.addEventListener("animationend", () => element.remove());
+  setTimeout(() => element.remove(), milliseconds);
+}
+
 function floatHarvest(
   seed: HTMLElement,
   event: MouseEvent,
@@ -141,6 +160,58 @@ function floatHarvest(
   mote.textContent = `+${formatStardust(harvest)}`;
   mote.style.left = `${event.clientX - seedRect.left}px`;
   mote.style.top = `${event.clientY - seedRect.top}px`;
-  mote.addEventListener("animationend", () => mote.remove());
+  transient(mote, 1000);
   seed.append(mote);
+}
+
+// A ring that expands from the press point and fades away.
+function shockwave(seed: HTMLElement, event: MouseEvent): void {
+  const seedRect = seed.getBoundingClientRect();
+  const ring = document.createElement("span");
+  ring.className = "shockwave";
+  ring.style.left = `${event.clientX - seedRect.left}px`;
+  ring.style.top = `${event.clientY - seedRect.top}px`;
+  transient(ring, 600);
+  seed.append(ring);
+}
+
+// A handful of stardust sparks thrown outward from the press point.
+function sparkBurst(seed: HTMLElement, event: MouseEvent): void {
+  const seedRect = seed.getBoundingClientRect();
+  const sparks = 10;
+  for (let i = 0; i < sparks; i += 1) {
+    const spark = document.createElement("span");
+    spark.className = "spark";
+    const angle = (i / sparks) * 2 * Math.PI + Math.random() * 0.5;
+    const distance = 38 + Math.random() * 34;
+    spark.style.left = `${event.clientX - seedRect.left}px`;
+    spark.style.top = `${event.clientY - seedRect.top}px`;
+    spark.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+    spark.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+    spark.style.animationDuration = `${0.45 + Math.random() * 0.25}s`;
+    transient(spark, 800);
+    seed.append(spark);
+  }
+}
+
+// Puffs the halo behind the seed. Restarting the class re-runs the puff
+// even when presses land mid-animation.
+function seedFlarePuff(flare: HTMLElement): void {
+  flare.classList.remove("puff");
+  void flare.offsetWidth;
+  flare.classList.add("puff");
+}
+
+// One bright flash-and-pop of the whole seed per press.
+function flashSeed(seed: HTMLElement): void {
+  seed.classList.remove("flash");
+  void seed.offsetWidth;
+  seed.classList.add("flash");
+}
+
+// A quick scale pop on the stardust counter.
+function punch(counter: HTMLElement): void {
+  counter.classList.remove("punch");
+  void counter.offsetWidth;
+  counter.classList.add("punch");
 }

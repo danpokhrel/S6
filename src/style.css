@@ -88,6 +88,59 @@ h1 {
   -webkit-user-select: none;
 }
 
+/* Soft halo sitting behind the seed image. */
+.seed-flare {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 217, 122, 0.55) 0%,
+    rgba(255, 217, 122, 0.18) 45%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.seed-flare.puff {
+  animation: flare-puff 0.4s ease-out;
+}
+
+@keyframes flare-puff {
+  0% {
+    opacity: 0;
+    scale: 0.55;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.25;
+  }
+}
+
+/* One bright flash-and-pop of the whole seed per press. */
+#great-seed.flash {
+  animation: seed-flash 0.28s ease-out;
+}
+
+@keyframes seed-flash {
+  0% {
+    filter: brightness(2.1) drop-shadow(0 0 34px rgba(255, 217, 122, 0.85));
+    transform: scale(1.1) rotate(2deg);
+  }
+  60% {
+    filter: brightness(1.25);
+    transform: scale(0.97) rotate(-1deg);
+  }
+  100% {
+    filter: brightness(1);
+    transform: scale(1) rotate(0deg);
+  }
+}
+
 #great-seed img {
   display: block;
   width: 100%;
@@ -132,6 +185,76 @@ h1 {
   to {
     opacity: 0;
     translate: 0 -3rem;
+  }
+}
+
+/* Ring expanding from the press point. */
+.shockwave {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff2ce;
+  box-shadow: 0 0 12px rgba(255, 217, 122, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: shockwave 0.5s ease-out forwards;
+}
+
+@keyframes shockwave {
+  from {
+    opacity: 0.9;
+    scale: 0.3;
+  }
+  to {
+    opacity: 0;
+    scale: 5;
+  }
+}
+
+/* Stardust sparks thrown outward from the press point; their direction
+   comes from --dx/--dy set in JavaScript. */
+.spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff2ce;
+  box-shadow: 0 0 8px 2px rgba(255, 217, 122, 0.9);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: spark 0.6s ease-out forwards;
+  --dx: 0px;
+  --dy: 0px;
+}
+
+@keyframes spark {
+  from {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+    scale: 0.2;
+  }
+}
+
+/* Counter pop on every harvest. */
+#stardust-counter.punch {
+  animation: counter-punch 0.22s ease-out;
+}
+
+@keyframes counter-punch {
+  0% {
+    scale: 1;
+  }
+  40% {
+    scale: 1.18;
+  }
+  100% {
+    scale: 1;
   }
 }
 
@@ -181,4 +304,22 @@ h1 {
   margin-top: 0.25rem;
   font-size: 0.85rem;
   font-style: italic;
+}
+
+/* Users who prefer reduced motion get the instant state change without
+   the flying debris. */
+@media (prefers-reduced-motion: reduce) {
+  .harvest-mote,
+  .shockwave,
+  .spark,
+  .seed-flare.puff,
+  #great-seed.flash,
+  #stardust-counter.punch {
+    animation: none;
+    opacity: 0;
+  }
+
+  #great-seed img {
+    animation: none;
+  }
 }
