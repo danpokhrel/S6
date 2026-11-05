@@ -11,7 +11,11 @@ const app = document.querySelector<HTMLElement>("#app")!;
 const state = createGameState();
 
 const render = buildUi(app, {
-  onPlant: () => plantSeed(state),
+  onPlant: () => {
+    const harvest = plantSeed(state);
+    render(state);
+    return harvest;
+  },
   onBuy: (upgrade) => {
     buyUpgrade(state, upgrade);
     render(state);
