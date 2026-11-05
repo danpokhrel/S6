@@ -17,8 +17,9 @@ const render = buildUi(app, {
     return harvest;
   },
   onBuy: (upgrade) => {
-    buyUpgrade(state, upgrade);
-    render(state);
+    const bought = buyUpgrade(state, upgrade);
+    if (bought) render(state);
+    return bought;
   },
 });
 

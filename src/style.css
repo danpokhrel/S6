@@ -277,6 +277,70 @@ h1 {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+.shop-card:active:enabled {
+  transform: scale(0.98);
+}
+
+/* A purchase lands: the card flashes gold and settles. */
+.shop-card.bought {
+  animation: card-bought 0.4s ease-out;
+}
+
+@keyframes card-bought {
+  0% {
+    border-color: #ffd97a;
+    box-shadow: 0 0 20px rgba(255, 217, 122, 0.7);
+    filter: brightness(1.4);
+    scale: 1.04;
+  }
+  100% {
+    box-shadow: none;
+    filter: brightness(1);
+    scale: 1;
+  }
+}
+
+/* The card warms up as the garden gathers more of its residents. */
+.shop-card[data-tier="1"] {
+  background: rgba(23, 107, 104, 0.75);
+}
+
+.shop-card[data-tier="2"] {
+  border-color: #ffd97a;
+  background: rgba(29, 129, 125, 0.65);
+  box-shadow: 0 0 12px rgba(255, 217, 122, 0.25);
+}
+
+.shop-card[data-tier="3"] {
+  border-color: #fff2ce;
+  background: rgba(255, 217, 122, 0.16);
+  box-shadow: 0 0 18px rgba(255, 217, 122, 0.4);
+}
+
+/* Owned count as lit pips, capped at five with a count beyond. */
+.shop-pips {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 0.35rem;
+  align-items: center;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pip {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(203, 227, 214, 0.5);
+}
+
+.pip.lit {
+  background: #ffd97a;
+  border-color: #ffd97a;
+  box-shadow: 0 0 6px rgba(255, 217, 122, 0.8);
+}
+
 .shop-card:hover:enabled {
   background: rgba(29, 129, 125, 0.8);
   border-color: #cbe3d6;
@@ -314,6 +378,7 @@ h1 {
   .spark,
   .seed-flare.puff,
   #great-seed.flash,
+  .shop-card.bought,
   #stardust-counter.punch {
     animation: none;
     opacity: 0;

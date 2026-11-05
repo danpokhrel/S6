@@ -10,7 +10,9 @@ import { type Upgrade, upgrades } from "./upgrades.ts";
 export type UiCallbacks = {
   // Plants a star; returns the harvest so a mote can show its size.
   onPlant: (event: MouseEvent) => number;
-  onBuy: (upgrade: Upgrade) => void;
+  // Attempts the purchase; reports whether it happened so the card can
+  // celebrate a real purchase.
+  onBuy: (upgrade: Upgrade) => boolean;
 };
 
 export function formatStardust(value: number): string {
@@ -72,7 +74,7 @@ export function buildUi(
 
   greatSeed.addEventListener("click", (event) => {
     const harvest = callbacks.onPlant(event);
-    floatHarvest(greatSeed, event, harvest);
+    floatHarvest(greatSeed, event, `+${formatStardust(harvest)}`);
     shockwave(greatSeed, event);
     sparkBurst(greatSeed, event);
     seedFlarePuff(seedFlare);
@@ -94,7 +96,13 @@ export function buildUi(
     const card = document.createElement("button");
     card.type = "button";
     card.className = "shop-card";
-    card.addEventListener("click", () => callbacks.onBuy(upgrade));
+    card.addEventListener("click", (event) => {
+      if (!callbacks.onBuy(upgrade)) return;
+      // The card celebrates its own purchase: ring, flash, and a +1 mote.
+      shockwave(card, event);
+      floatHarvest(card, event, "+1");
+      flashCard(card);
+    });
     shop.append(card);
     shopCards.set(upgrade.id, card);
   }
@@ -123,22 +131,45 @@ export function buildUi(
       const effect = upgrade.stardustPerClick > 0
         ? `+${upgrade.stardustPerClick} per click`
         : `+${upgrade.stardustPerSecond} per second`;
+      // The card warms up as the garden gathers more of its residents.
+      card.dataset.tier = upgrade.owned >= 10
+        ? "3"
+        : upgrade.owned >= 5
+        ? "2"
+        : upgrade.owned >= 1
+        ? "1"
+        : "0";
       card.innerHTML = "";
       const name = document.createElement("span");
       name.className = "shop-name";
       name.textContent = upgrade.name;
       const meta = document.createElement("span");
       meta.className = "shop-meta";
-      meta.textContent = `costs ${
-        formatStardust(cost)
-      } — owned ${upgrade.owned}`;
+      meta.textContent = `costs ${formatStardust(cost)}`;
       const detail = document.createElement("span");
       detail.className = "shop-detail";
       detail.textContent = `${upgrade.description} ${effect}.`;
-      card.append(name, meta, detail);
+      card.append(name, meta, detail, ownedPips(upgrade.owned));
       card.disabled = state.stardust < cost;
     }
   };
+}
+
+// A row of five pips, one lit per owned copy (capped), with a count
+// beyond that. Shows how many of the resident the garden already keeps.
+function ownedPips(owned: number): HTMLElement {
+  const pips = document.createElement("span");
+  pips.className = "shop-pips";
+  const lit = Math.min(owned, 5);
+  for (let i = 0; i < 5; i += 1) {
+    const pip = document.createElement("i");
+    pip.className = i < lit ? "pip lit" : "pip";
+    pips.append(pip);
+  }
+  if (owned > 5) {
+    pips.append(document.createTextNode(` ×${owned}`));
+  }
+  return pips;
 }
 
 // Removes the element once its one-shot animation has certainly finished.
@@ -150,18 +181,18 @@ function transient(element: HTMLElement, milliseconds: number): void {
 }
 
 function floatHarvest(
-  seed: HTMLElement,
+  host: HTMLElement,
   event: MouseEvent,
-  harvest: number,
+  text: string,
 ): void {
-  const seedRect = seed.getBoundingClientRect();
+  const hostRect = host.getBoundingClientRect();
   const mote = document.createElement("span");
   mote.className = "harvest-mote";
-  mote.textContent = `+${formatStardust(harvest)}`;
-  mote.style.left = `${event.clientX - seedRect.left}px`;
-  mote.style.top = `${event.clientY - seedRect.top}px`;
+  mote.textContent = text;
+  mote.style.left = `${event.clientX - hostRect.left}px`;
+  mote.style.top = `${event.clientY - hostRect.top}px`;
   transient(mote, 1000);
-  seed.append(mote);
+  host.append(mote);
 }
 
 // A ring that expands from the press point and fades away.
@@ -207,6 +238,13 @@ function flashSeed(seed: HTMLElement): void {
   seed.classList.remove("flash");
   void seed.offsetWidth;
   seed.classList.add("flash");
+}
+
+// One bright flash-and-pop of a shop card when a purchase lands.
+function flashCard(card: HTMLElement): void {
+  card.classList.remove("bought");
+  void card.offsetWidth;
+  card.classList.add("bought");
 }
 
 // A quick scale pop on the stardust counter.
