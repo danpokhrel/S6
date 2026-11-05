@@ -27,17 +27,24 @@ plantStar.addEventListener("click", () => {
   render();
 });
 
-// The Great Seed sheds light on its own: 1 stardust per second.
-const PASSIVE_STARDUST_PER_TICK = 1;
-const TICK_MS = 1000;
+// The Great Seed sheds light on its own: 1 stardust per second. Growth is
+// integrated from elapsed real time, so it does not depend on frame rate.
+const PASSIVE_STARDUST_PER_SECOND = 1;
 
-setInterval(() => {
-  state.stardust += PASSIVE_STARDUST_PER_TICK;
+let lastTick = performance.now();
+
+function tick(now: number) {
+  const elapsedSeconds = (now - lastTick) / 1000;
+  lastTick = now;
+  state.stardust += elapsedSeconds * PASSIVE_STARDUST_PER_SECOND;
   render();
-}, TICK_MS);
+  requestAnimationFrame(tick);
+}
+
+requestAnimationFrame(tick);
 
 function render() {
-  stardustCounter.textContent = `${state.stardust} stardust`;
+  stardustCounter.textContent = `${Math.floor(state.stardust)} stardust`;
 }
 
 app.append(heading, tagline, stardustCounter, plantStar);
