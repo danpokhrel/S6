@@ -45,4 +45,14 @@ export const upgrades: Upgrade[] = [
     stardustPerClick: 0,
     owned: 0,
   },
+  {
+    id: "nebula",
+    name: "Nebula nursery",
+    description:
+      "A warm cloud where sprouting stars raise themselves into light.",
+    baseCost: 1200,
+    stardustPerSecond: 15,
+    stardustPerClick: 0,
+    owned: 0,
+  },
 ];
